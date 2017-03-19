@@ -37,7 +37,6 @@ services:
     nginx:
         image: phalconphp/nginx
         environment:
-            - PHP_UPSTREAM=php-fpm
             - VIRTUAL_HOST=$VIRTUAL_HOST
         links:
             - php-fpm
