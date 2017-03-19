@@ -1,0 +1,77 @@
+version: '2'
+
+services:
+
+
+### Applications Code Container #############################
+
+    applications:
+        image: tianon/true
+        volumes:
+            - $APPLICATION_VOLUME_PATH:/var/www
+
+### Workspace Utilities Container ###########################
+
+    workspace:
+        image: phalconphp/php:7
+        volumes_from:
+            - applications
+        networks:
+            - default
+        tty: true
+
+### PHP-FPM Container #######################################
+
+    php-fpm:
+        image: phalconphp/php-fpm:7-min
+        volumes_from:
+            - applications
+        links:
+            - workspace
+            - redis
+        networks:
+            - default
+
+### Nginx Server Container ##################################
+
+    nginx:
+        image: phalconphp/nginx
+        environment:
+            - PHP_UPSTREAM=php-fpm
+            - VIRTUAL_HOST=$VIRTUAL_HOST
+        links:
+            - php-fpm
+        volumes_from:
+            - applications
+        volumes:
+            - ./nginx/sites:/etc/nginx/sites-enabled
+            - ./nginx/certs:/etc/nginx/certs
+            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./logs/nginx:/var/log/nginx
+
+### Redis Container #########################################
+
+    redis:
+        build: ./redis
+        volumes:
+            - redis:/data
+
+### Tarantool Container #########################################
+
+    tarantool:
+        image: tarantool/tarantool:1.7
+        networks:
+            - default
+        volumes:
+            - tarantool:/opt/tarantool
+            - tarantool_data:/var/lib/tarantool
+
+### Volumes Setup ###########################################
+
+volumes:
+    redis:
+        driver: "local"
+    tarantool:
+        driver: "local"
+    tarantool_data:
+        driver: "local"
